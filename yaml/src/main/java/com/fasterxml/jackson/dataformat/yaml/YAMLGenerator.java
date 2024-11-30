@@ -23,9 +23,7 @@ import com.fasterxml.jackson.core.io.IOContext;
 
 public class YAMLGenerator extends GeneratorBase
 {
-    /**
-     * Enumeration that defines all togglable features for YAML generators
-     */
+
     public enum Feature implements FormatFeature // since 2.9
     {
         /**
