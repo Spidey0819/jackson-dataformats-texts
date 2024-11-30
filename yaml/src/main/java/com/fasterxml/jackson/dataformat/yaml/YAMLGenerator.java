@@ -172,7 +172,7 @@ public class YAMLGenerator extends GeneratorBase
          * <p>
          *     Ignored if you provide your own {@code DumperOptions}.
          * </p>
-         * 
+         *
          * @since 2.14
          */
         ALLOW_LONG_KEYS(false),
@@ -290,11 +290,12 @@ public class YAMLGenerator extends GeneratorBase
     /**********************************************************
      */
 
+
     public YAMLGenerator(IOContext ctxt, int jsonFeatures, int yamlFeatures,
-            StringQuotingChecker quotingChecker,
-            ObjectCodec codec, Writer out,
-            org.yaml.snakeyaml.DumperOptions.Version version)
-        throws IOException
+                         StringQuotingChecker quotingChecker,
+                         ObjectCodec codec, Writer out,
+                         org.yaml.snakeyaml.DumperOptions.Version version)
+            throws IOException
     {
         super(jsonFeatures, codec, ctxt);
         _streamWriteConstraints = ctxt.streamWriteConstraints();
@@ -338,14 +339,14 @@ public class YAMLGenerator extends GeneratorBase
 
     @Deprecated // since 2.12
     public YAMLGenerator(IOContext ctxt, int jsonFeatures, int yamlFeatures,
-            ObjectCodec codec, Writer out,
-            org.yaml.snakeyaml.DumperOptions.Version version) throws IOException {
+                         ObjectCodec codec, Writer out,
+                         org.yaml.snakeyaml.DumperOptions.Version version) throws IOException {
         this(ctxt, jsonFeatures, yamlFeatures, null,
                 codec, out, version);
     }
 
     protected DumperOptions buildDumperOptions(int jsonFeatures, int yamlFeatures,
-            org.yaml.snakeyaml.DumperOptions.Version version)
+                                               org.yaml.snakeyaml.DumperOptions.Version version)
     {
         DumperOptions opt = new DumperOptions();
         // would we want canonical?
@@ -513,7 +514,7 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     public final void writeFieldName(SerializableString name)
-        throws IOException
+            throws IOException
     {
         // Object is a value, need to verify it's allowed
         if (_writeContext.writeFieldName(name.getValue()) == JsonWriteContext.STATUS_EXPECT_VALUE) {
@@ -653,8 +654,7 @@ public class YAMLGenerator extends GeneratorBase
      */
 
     @Override
-    public void writeString(String text) throws IOException,JsonGenerationException
-    {
+    public void writeString(String text) throws IOException, JsonGenerationException {
         if (text == null) {
             writeNull();
             return;
@@ -663,31 +663,61 @@ public class YAMLGenerator extends GeneratorBase
 
         // [dataformats-text#50]: Empty String always quoted
         if (text.isEmpty()) {
-            _writeScalar(text, "string", STYLE_QUOTED);
+            writeEmptyString();
             return;
         }
-        DumperOptions.ScalarStyle style;
-        if (Feature.MINIMIZE_QUOTES.enabledIn(_formatFeatures)) {
-            if (text.indexOf('\n') >= 0) {
-                style = STYLE_LITERAL;
-            // If one of reserved values ("true", "null"), or, number, preserve quoting:
-            } else if (_quotingChecker.needToQuoteValue(text)
-                || (Feature.ALWAYS_QUOTE_NUMBERS_AS_STRINGS.enabledIn(_formatFeatures)
-                        && PLAIN_NUMBER_P.matcher(text).matches())
-                ) {
-                style = STYLE_QUOTED;
-            } else {
-                style = STYLE_PLAIN;
-            }
-        } else {
-            if (Feature.LITERAL_BLOCK_STYLE.enabledIn(_formatFeatures)
-                    && text.indexOf('\n') >= 0) {
-                style = STYLE_LITERAL;
-            } else {
-                style = STYLE_QUOTED;
-            }
-        }
+
+        DumperOptions.ScalarStyle style = determineStringStyle(text);
         _writeScalar(text, "string", style);
+    }
+
+    // Extracted method for handling empty strings
+    private void writeEmptyString() throws IOException {
+        _writeScalar("", "string", STYLE_QUOTED);
+    }
+
+    // Extracted method to determine the scalar style
+    private DumperOptions.ScalarStyle determineStringStyle(String text) {
+        boolean isMinimizeQuotesEnabled = Feature.MINIMIZE_QUOTES.enabledIn(_formatFeatures);
+        boolean hasNewlines = text.indexOf('\n') >= 0;
+
+        if (isMinimizeQuotesEnabled) {
+            return determineMinimizedStyle(text, hasNewlines);
+        }
+        return determineDefaultStyle(hasNewlines);
+    }
+
+    // Extracted method for style determination with minimized quotes
+    private DumperOptions.ScalarStyle determineMinimizedStyle(String text, boolean hasNewlines) {
+        if (hasNewlines) {
+            return STYLE_LITERAL;
+        }
+
+        boolean requiresQuoting = shouldQuoteValue(text);
+        if (requiresQuoting) {
+            return STYLE_QUOTED;
+        }
+        return STYLE_PLAIN;
+    }
+
+    // Extracted method to determine if value needs quoting
+    private boolean shouldQuoteValue(String text) {
+        boolean isReservedOrNeedsQuoting = _quotingChecker.needToQuoteValue(text);
+        boolean isNumberRequiringQuotes = isNumberRequiringQuotes(text);
+        return isReservedOrNeedsQuoting || isNumberRequiringQuotes;
+    }
+
+    // Extracted method for number quoting check
+    private boolean isNumberRequiringQuotes(String text) {
+        boolean quoteNumbersEnabled = Feature.ALWAYS_QUOTE_NUMBERS_AS_STRINGS.enabledIn(_formatFeatures);
+        boolean isNumber = PLAIN_NUMBER_P.matcher(text).matches();
+        return quoteNumbersEnabled && isNumber;
+    }
+
+    // Extracted method for default style determination
+    private DumperOptions.ScalarStyle determineDefaultStyle(boolean hasNewlines) {
+        boolean useLiteralStyle = Feature.LITERAL_BLOCK_STYLE.enabledIn(_formatFeatures) && hasNewlines;
+        return useLiteralStyle ? STYLE_LITERAL : STYLE_QUOTED;
     }
 
     @Override
@@ -698,21 +728,21 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     public final void writeString(SerializableString sstr)
-        throws IOException
+            throws IOException
     {
         writeString(sstr.toString());
     }
 
     @Override
     public void writeRawUTF8String(byte[] text, int offset, int len)
-        throws IOException
+            throws IOException
     {
         _reportUnsupportedOperation();
     }
 
     @Override
     public final void writeUTF8String(byte[] text, int offset, int len)
-        throws IOException
+            throws IOException
     {
         writeString(new String(text, offset, len, "UTF-8"));
     }
@@ -888,7 +918,7 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     public void writeTypeId(Object id)
-        throws IOException
+            throws IOException
     {
         // should we verify there's no preceding type id?
         _typeId = String.valueOf(id);
@@ -896,7 +926,7 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     public void writeObjectRef(Object id)
-        throws IOException
+            throws IOException
     {
         _verifyValueWrite("write Object reference");
         AliasEvent evt = new AliasEvent(String.valueOf(id), null, null);
@@ -905,7 +935,7 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     public void writeObjectId(Object id)
-        throws IOException
+            throws IOException
     {
         // should we verify there's no preceding id?
         _objectId = (id == null) ? null : String.valueOf(id);
@@ -919,7 +949,7 @@ public class YAMLGenerator extends GeneratorBase
 
     @Override
     protected final void _verifyValueWrite(String typeMsg)
-        throws IOException
+            throws IOException
     {
         int status = _writeContext.writeValue();
         if (status == JsonWriteContext.STATUS_EXPECT_NAME) {
@@ -959,7 +989,7 @@ public class YAMLGenerator extends GeneratorBase
     }
 
     private void _writeScalarBinary(Base64Variant b64variant,
-            byte[] data) throws IOException
+                                    byte[] data) throws IOException
     {
         // 15-Dec-2017, tatu: as per [dataformats-text#62], can not use SnakeYAML's internal
         //    codec. Also: force use of linefeed variant if using default

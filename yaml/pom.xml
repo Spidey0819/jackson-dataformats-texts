@@ -37,6 +37,12 @@
       <version>2.3</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+      <version>2.14.2</version>
+    </dependency>
+
      <!-- and for testing need annotations; but should be available via `jackson-databind` above
        -->
   </dependencies>

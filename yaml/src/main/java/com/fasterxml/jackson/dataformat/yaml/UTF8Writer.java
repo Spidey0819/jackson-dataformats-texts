@@ -4,7 +4,7 @@ import java.io.*;
 import java.lang.ref.SoftReference;
 
 public final class UTF8Writer
-    extends Writer
+        extends Writer
 {
     final static int SURR1_FIRST = 0xD800;
     final static int SURR1_LAST = 0xDBFF;
@@ -12,16 +12,16 @@ public final class UTF8Writer
     final static int SURR2_LAST = 0xDFFF;
 
     private final static int DEFAULT_BUFFER_SIZE = 8000;
-    
+
     /**
      * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}
      * to a byte array used for holding content to decode
      */
     final protected static ThreadLocal<SoftReference<byte[][]>> _bufferRecycler
-        = new ThreadLocal<SoftReference<byte[][]>>();
+            = new ThreadLocal<SoftReference<byte[][]>>();
 
     protected final byte[][] _bufferHolder;
-    
+
     private OutputStream _out;
 
     private byte[] _outBuffer;
@@ -69,7 +69,7 @@ public final class UTF8Writer
         }
         return bufs;
     }
-    
+
     @Override
     public Writer append(char c) throws IOException
     {
@@ -221,7 +221,7 @@ public final class UTF8Writer
         }
         _outPtr = outPtr;
     }
-    
+
     @Override
     public void write(int c) throws IOException
     {
@@ -379,21 +379,28 @@ public final class UTF8Writer
     /**
      * Method called to calculate UTF codepoint, from a surrogate pair.
      */
-    private int convertSurrogate(int secondPart)
-        throws IOException
-    {
+    private int convertSurrogate(int secondPart) throws IOException {
         int firstPart = _surrogate;
         _surrogate = 0;
 
-        // Ok, then, is the second part valid?
-        if (secondPart < SURR2_FIRST || secondPart > SURR2_LAST) {
-            throw new IOException("Broken surrogate pair: first char 0x"+Integer.toHexString(firstPart)+", second 0x"+Integer.toHexString(secondPart)+"; illegal combination");
+        boolean isValidRange = (secondPart >= SURR2_FIRST && secondPart <= SURR2_LAST);
+        if (!isValidRange) {
+            String firstHexValue = Integer.toHexString(firstPart);
+            String secondHexValue = Integer.toHexString(secondPart);
+            String errorMessage = "Broken surrogate pair: first char 0x" + firstHexValue +
+                    ", second 0x" + secondHexValue + "; illegal combination";
+            throw new IOException(errorMessage);
         }
-        return 0x10000 + ((firstPart - SURR1_FIRST) << 10) + (secondPart - SURR2_FIRST);
+
+        int surrogateOffset = 0x10000;
+        int shiftedFirstPart = (firstPart - SURR1_FIRST) << 10;
+        int adjustedSecondPart = secondPart - SURR2_FIRST;
+
+        return surrogateOffset + shiftedFirstPart + adjustedSecondPart;
     }
 
     private void throwIllegal(int code)
-        throws IOException
+            throws IOException
     {
         if (code > 0x10FFFF) { // over max?
             throw new IOException("Illegal character point (0x"+Integer.toHexString(code)+") to output; max is 0x10FFFF as per RFC 4627");
