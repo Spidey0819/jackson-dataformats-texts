@@ -34,7 +34,7 @@ public class ObjectIdTest extends ModuleTestBase {
                         +"  next: 1";
     }
 
-    // Pull up common ID generation functionality
+    // Pull up common ID generation 
     static abstract class BaseIdGenerator<T> extends ObjectIdGenerator<T> {
         private static final long serialVersionUID = 1L;
         protected final Class<?> scope;
